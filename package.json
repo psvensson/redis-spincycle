@@ -17,7 +17,10 @@
   },
   "homepage": "https://github.com/psvensson/redis-spincycle#readme",
   "dependencies": {
+    "chai": "^3.0.0",
     "node-promise": "^0.5.12",
-    "redis": "^0.12.1"
+    "node-uuid": "^1.4.3",
+    "redis": "^0.12.1",
+    "uuidv4": "^0.3.1"
   }
 }
