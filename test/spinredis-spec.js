@@ -28,4 +28,26 @@ describe("Redis spinclient", function()
         })
 
     })
+
+    it("should send a message to spincycle and get a reply back", function(done)
+    {
+        msg =
+        {
+            target: 'foo',
+            obj:{id:17, type:'FOO'}
+        };
+
+        sr.emitMessage(msg).then(function(reply)
+        {
+            console.log('we got a reply. Yay!');
+            expect(reply).to.exist
+            done()
+        }, function(reject)
+        {
+            expect(reject).to.exist
+            done()
+        })
+
+    })
+
 })

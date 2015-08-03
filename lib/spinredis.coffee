@@ -10,8 +10,12 @@ class spinredis
 
     @outstandingMessages = []
     @modelcache          = []
-    @sendredis           = require('redis').createClient()
-    @listenredis         = require('redis').createClient()
+
+    rhost = process.env['REDIS_PORT_6379_TCP_ADDR'] or '127.0.0.1'
+    rport = process.env['REDIS_PORT_6379_TCP_PORT'] or '6379'
+
+    @sendredis           = require('redis').createClient(rport, rhost)
+    @listenredis         = require('redis').createClient(rport, rhost)
     @sessionId           = null
     @objectss            = []
 
