@@ -1,7 +1,7 @@
 uuid      = require('node-uuid')
 $q        = require('node-promise')
 
-debug = process.ev['DEBUG']
+debug = process.env['DEBUG']
 
 class spinredis
 
