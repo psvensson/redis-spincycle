@@ -1,6 +1,8 @@
 uuid      = require('node-uuid')
 $q        = require('node-promise')
 
+debug = process.ev['DEBUG']
+
 class spinredis
 
   constructor: () ->
@@ -165,14 +167,14 @@ class spinredis
         console.log 'deregistering server updates for @objects '+o.id
 
   emitMessage : (detail) =>
-    #console.log 'emitMessage called'
+    if debug then console.log 'emitMessage called'
     #console.dir detail
     d = $q.defer()
     detail.messageId = uuid.v4()
     detail.sessionId = @sessionId
     detail.d = d
     @outstandingMessages.push detail
-    #console.log 'saving outstanding reply to messageId '+detail.messageId+' and @sessionId '+detail.@sessionId
+    if debug then console.log 'saving outstanding reply to messageId '+detail.messageId+' and @sessionId '+detail.sessionId
     @emit detail
 
     return d.promise
