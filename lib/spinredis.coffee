@@ -54,6 +54,8 @@ class spinredis
 
   emit: (message) =>
     message.channelID = 'spinchannel_'+@channelID
+    if debug then console.log 'redisclient emitting message..'
+    if debug then console.dir message
     @sendredis.publish('spinchannel', JSON.stringify(message))
 
   setup: () =>
