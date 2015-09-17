@@ -173,7 +173,7 @@ class spinredis
     #console.dir detail
     d = $q.defer()
     detail.messageId = uuid.v4()
-    detail.sessionId = @sessionId
+    detail.sessionId = detail.sessionId or  @sessionId
     detail.d = d
     @outstandingMessages.push detail
     if debug then console.log 'saving outstanding reply to messageId '+detail.messageId+' and @sessionId '+detail.sessionId
