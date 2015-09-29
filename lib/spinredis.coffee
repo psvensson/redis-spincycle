@@ -18,6 +18,13 @@ class spinredis
 
     @sendredis           = require('redis').createClient(rport, rhost)
     @listenredis         = require('redis').createClient(rport, rhost)
+
+    @listenredis.on 'error', (err) ->
+      console.log 'spinredis listen ERROR: '+err
+
+    @sendredis.on 'error', (err) ->
+      console.log 'spinredis send ERROR: '+err
+
     @sessionId           = null
     @objectss            = []
 
