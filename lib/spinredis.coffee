@@ -5,7 +5,7 @@ debug = process.env['DEBUG']
 
 class spinredis
 
-  constructor: () ->
+  constructor: (dbUrl) ->
     @subscribers         = []
     @objsubscribers      = []
     @objectsSubscribedTo = []
@@ -13,7 +13,7 @@ class spinredis
     @outstandingMessages = []
     @modelcache          = []
 
-    rhost = process.env['REDIS_PORT_6379_TCP_ADDR'] or '127.0.0.1'
+    rhost = dbUrl or process.env['REDIS_PORT_6379_TCP_ADDR'] or '127.0.0.1'
     rport = process.env['REDIS_PORT_6379_TCP_PORT'] or '6379'
 
     @sendredis           = require('redis').createClient(rport, rhost)
@@ -83,7 +83,7 @@ class spinredis
         i = 0
         while i < @outstandingMessages.length
           detail = @outstandingMessages[i]
-          if detail.messageId == reply.messageId
+          if detail and detail.messageId == reply.messageId
             if reply.status == 'FAILURE'
               console.log 'spinclient message FAILURE'
               console.dir reply
