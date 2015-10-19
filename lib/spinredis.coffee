@@ -85,7 +85,7 @@ class spinredis
         while i < @outstandingMessages.length
           detail = @outstandingMessages[i]
           if detail and detail.messageId == reply.messageId
-            if reply.status == 'FAILURE'
+            if reply.status == 'FAILURE' or reply.status == 'NOT_ALLOWED'
               console.log 'spinclient message FAILURE'
               console.dir reply
               detail.d.reject reply
