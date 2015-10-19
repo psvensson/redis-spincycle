@@ -76,7 +76,7 @@ class spinredis
       status = reply.status
       message = reply.payload
       info = reply.info
-      console.log 'got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = '+@outstandingMessages.length
+      console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = '+@outstandingMessages.length
       @dumpOutstanding()
       #console.dir reply
       index = -1
