@@ -89,6 +89,7 @@ class spinredis
         if reply.messageId
           i = 0
           while i < @outstandingMessages.length
+            index = i
             detail = @outstandingMessages[i]
             if detail and not detail.delivered and detail.messageId == reply.messageId
               if reply.status == 'FAILURE' or reply.status == 'NOT_ALLOWED'
@@ -99,18 +100,15 @@ class spinredis
               else
                 #console.log 'delivering message '+message+' reply to '+detail.target+' to '+reply.messageId
                 detail.d.resolve(message)
-                index = i
                 break
               detail.delivered = true
             i++
           if index > -1
-            #console.log 'removing outstanding reply'
             @outstandingMessages.splice index, 1
         else
           @subscribers = @subscribers[info]
           if @subscribers
             @subscribers.forEach (listener) ->
-              #console.log("sending reply to listener");
               listener message
           else
             console.log 'no subscribers for message ' + message
