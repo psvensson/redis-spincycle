@@ -84,7 +84,7 @@ class spinredis
         i = 0
         while i < @outstandingMessages.length
           detail = @outstandingMessages[i]
-          if detail and detail.messageId == reply.messageId
+          if detail and not detail.delivered and detail.messageId == reply.messageId
             if reply.status == 'FAILURE' or reply.status == 'NOT_ALLOWED'
               console.log 'spinclient message FAILURE'
               console.dir reply
@@ -95,6 +95,7 @@ class spinredis
               detail.d.resolve(message)
               index = i
               break
+            detail.delivered = true
           i++
         if index > -1
           #console.log 'removing outstanding reply'
