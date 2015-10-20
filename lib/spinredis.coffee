@@ -13,6 +13,8 @@ class spinredis
     @outstandingMessages = []
     @modelcache          = []
 
+    @seenMessages        = []
+
     if debug then console.log 'redis-spincycle dbUrl = '+dbUrl
     rhost = dbUrl or process.env['REDIS_PORT_6379_TCP_ADDR'] or '127.0.0.1'
     rport = process.env['REDIS_PORT_6379_TCP_PORT'] or '6379'
@@ -76,39 +78,48 @@ class spinredis
       status = reply.status
       message = reply.payload
       info = reply.info
-      console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = '+@outstandingMessages.length
-      @dumpOutstanding()
-      #console.dir reply
-      index = -1
-      if reply.messageId
-        i = 0
-        while i < @outstandingMessages.length
-          detail = @outstandingMessages[i]
-          if detail and not detail.delivered and detail.messageId == reply.messageId
-            if reply.status == 'FAILURE' or reply.status == 'NOT_ALLOWED'
-              console.log 'spinclient message FAILURE'
-              console.dir reply
-              detail.d.reject reply
-              break
-            else
-              #console.log 'delivering message '+message+' reply to '+detail.target+' to '+reply.messageId
-              detail.d.resolve(message)
-              index = i
-              break
-            detail.delivered = true
-          i++
-        if index > -1
-          #console.log 'removing outstanding reply'
-          @outstandingMessages.splice index, 1
-      else
-        @subscribers = @subscribers[info]
-        if @subscribers
-          @subscribers.forEach (listener) ->
-            #console.log("sending reply to listener");
-            listener message
+
+      if not @hasSeenThisMessage reply.messageId
+        @seenMessages.push(reply.messageId)
+        if @seenMessages.length > 10 then @seenMessages.shift()
+        console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = '+@outstandingMessages.length
+        @dumpOutstanding()
+        #console.dir reply
+        index = -1
+        if reply.messageId
+          i = 0
+          while i < @outstandingMessages.length
+            detail = @outstandingMessages[i]
+            if detail and not detail.delivered and detail.messageId == reply.messageId
+              if reply.status == 'FAILURE' or reply.status == 'NOT_ALLOWED'
+                console.log 'spinclient message FAILURE'
+                console.dir reply
+                detail.d.reject reply
+                break
+              else
+                #console.log 'delivering message '+message+' reply to '+detail.target+' to '+reply.messageId
+                detail.d.resolve(message)
+                index = i
+                break
+              detail.delivered = true
+            i++
+          if index > -1
+            #console.log 'removing outstanding reply'
+            @outstandingMessages.splice index, 1
         else
-          console.log 'no subscribers for message ' + message
-          console.dir reply
+          @subscribers = @subscribers[info]
+          if @subscribers
+            @subscribers.forEach (listener) ->
+              #console.log("sending reply to listener");
+              listener message
+          else
+            console.log 'no subscribers for message ' + message
+            console.dir reply
+      else
+        console.log '-- skipped resent message '+reply.messageId
+
+  hasSeenThisMessage: (messageId) =>
+    @seenMessages.some (mid) -> messageId == mid
 
   registerListener: (detail) =>
     console.log 'spinclient::registerListener called for '+detail.message
