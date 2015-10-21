@@ -111,10 +111,10 @@ class spinredis
             @subscribers.forEach (listener) ->
               listener message
           else
-            console.log 'no subscribers for message ' + message
-            console.dir reply
+            if debug then console.log 'no subscribers for message ' + message
+            if debug then console.dir reply
       else
-        console.log '-- skipped resent message '+reply.messageId
+        if debug then console.log '-- skipped resent message '+reply.messageId
 
   hasSeenThisMessage: (messageId) =>
     @seenMessages.some (mid) -> messageId == mid
