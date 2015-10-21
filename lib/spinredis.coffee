@@ -73,7 +73,7 @@ class spinredis
     @listenredis.subscribe('spinchannel_'+@channelID)
 
     @listenredis.on 'message', (channel, replystr) =>
-      console.log 'on message got '+replystr
+      if debug then console.log 'on message got '+replystr
       reply = JSON.parse(replystr)
       status = reply.status
       message = reply.payload
@@ -82,8 +82,8 @@ class spinredis
       if not @hasSeenThisMessage reply.messageId
         @seenMessages.push(reply.messageId)
         if @seenMessages.length > 10 then @seenMessages.shift()
-        console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = '+@outstandingMessages.length
-        @dumpOutstanding()
+        if debug then console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = '+@outstandingMessages.length
+        if debug then @dumpOutstanding()
         #console.dir reply
         index = -1
         if reply.messageId
