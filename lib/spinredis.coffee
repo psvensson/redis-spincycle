@@ -131,7 +131,7 @@ class spinredis
     @subscribers.push detail.callback
     @subscribers[detail.message] = @subscribers
 
-  registerObjectsSubscriber: (detail) =>
+  registerObjectSubscriber: (detail) =>
     d = $q.defer()
     sid = uuid.v4()
     localsubs = @objectsSubscribedTo[detail.id]
@@ -141,7 +141,7 @@ class spinredis
       localsubs = []
       console.log 'no local subs, so get the original server-side subscription for id '+detail.id
       # actually set up subscription, once for each @objects
-      @registerObjectsSubscriber({id: detail.id, type: detail.type, cb: (updatedobj) ->
+      @_registerObjectSubscriber({id: detail.id, type: detail.type, cb: (updatedobj) ->
         console.log '-- register@objectsSubscriber getting obj update callback for '+detail.id
         lsubs = @objectsSubscribedTo[detail.id]
         #console.dir(lsubs)
@@ -157,7 +157,7 @@ class spinredis
         d.resolve(sid)
     return d.promise
 
-  registerObjectsSubscriber: (detail) =>
+  _registerObjectSubscriber: (detail) =>
     d = $q.defer()
     console.log 'message-router registering subscriber for @objects ' + detail.id + ' type ' + detail.type
     @subscribers = @objsubscribers[detail.id] or []
@@ -174,7 +174,7 @@ class spinredis
     return d.promise
 
   deRegisterObjectsSubscriber: (sid, o) =>
-    localsubs = @objectssSubscribedTo[o.id] or []
+    localsubs = @objectsSubscribedTo[o.id] or []
     if localsubs[sid]
       console.log 'deregistering local updates for @objects '+o.id
       delete localsubs[sid]
@@ -184,7 +184,7 @@ class spinredis
       if count == 1 # only remotesid property left
         @_deRegisterObjectsSubscriber('remotesid', o)
 
-  _degisterObjectsSubscriber: (sid, o) =>
+  _deRegisterObjectsSubscriber: (sid, o) =>
     @subscribers = @objsubscribers[o.id] or []
     if @subscribers and @subscribers[sid]
       delete @subscribers[sid]
