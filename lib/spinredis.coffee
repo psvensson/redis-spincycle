@@ -4,6 +4,10 @@ lru       = require('lru')
 
 debug = process.env['DEBUG']
 
+opts =
+  max: 1000
+  maxAgeInMilliseconds: 1000 * 60 * 60 * 24 * 4 # 4 days timeout of objects no matter what
+
 class spinredis
 
   constructor: (dbUrl) ->
@@ -16,7 +20,7 @@ class spinredis
 
     @seenMessages        = []
     @sessionId           = null
-    @objects             = new lru(1000) # have maximum 1000 objects in cache
+    @objects             = new lru(opts)
 
     if debug then console.log 'redis-spincycle dbUrl = '+dbUrl
     rhost = dbUrl or process.env['REDIS_PORT_6379_TCP_ADDR'] or '127.0.0.1'
