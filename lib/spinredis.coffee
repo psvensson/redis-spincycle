@@ -1,5 +1,6 @@
 uuid      = require('node-uuid')
 $q        = require('node-promise')
+lru       = require('lru')
 
 debug = process.env['DEBUG']
 
@@ -14,6 +15,8 @@ class spinredis
     @modelcache          = []
 
     @seenMessages        = []
+    @sessionId           = null
+    @objects             = new lru(1000) # have maximum 1000 objects in cache
 
     if debug then console.log 'redis-spincycle dbUrl = '+dbUrl
     rhost = dbUrl or process.env['REDIS_PORT_6379_TCP_ADDR'] or '127.0.0.1'
@@ -28,8 +31,7 @@ class spinredis
     @sendredis.on 'error', (err) ->
       console.log 'spinredis send ERROR: '+err
 
-    @sessionId           = null
-    @object s            = []
+
 
     @subscribers['OBJECT_UPDATE'] = [ (obj) ->
       #console.log 'spinclient +++++++++ obj update message router got obj'
@@ -37,10 +39,10 @@ class spinredis
       @subscribers = objsubscribers[obj.id] or []
       for k,v of @subscribers
         #console.log 'updating subscriber to @objects updates on id '+k
-        if not @objectss[obj.id]
-          @objectss[obj.id] = obj
+        if not @objects.get(obj.id)
+          @objects.set(obj.id, obj)
         else
-          o = @objectss[obj.id]
+          o = @objects.get(obj.id)
           for prop, val of obj
             o[prop] = val
         v obj
