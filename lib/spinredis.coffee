@@ -29,7 +29,7 @@ class spinredis
       console.log 'spinredis send ERROR: '+err
 
     @sessionId           = null
-    @objectss            = []
+    @object s            = []
 
     @subscribers['OBJECT_UPDATE'] = [ (obj) ->
       #console.log 'spinclient +++++++++ obj update message router got obj'
