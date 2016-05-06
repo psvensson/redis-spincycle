@@ -1,6 +1,6 @@
 {
   "name": "redis-spincycle",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "library tha connects to a spincycle server using redis pubsub",
   "main": "index.js",
   "scripts": {
@@ -17,10 +17,11 @@
   },
   "homepage": "https://github.com/psvensson/redis-spincycle#readme",
   "dependencies": {
-    "chai": "^3.0.0",
+    "chai": "^3.5.0",
     "lru": "^2.0.0",
+    "mocha": "^2.4.5",
     "node-promise": "^0.5.12",
-    "node-uuid": "^1.4.3",
+    "node-uuid": "^1.4.7",
     "redis": "^0.12.1",
     "uuidv4": "^0.3.1"
   }
