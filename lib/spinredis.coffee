@@ -11,6 +11,7 @@ opts =
 class spinredis
 
   constructor: (dbUrl) ->
+    console.log 'spinclient +++++++++ constructor called +++++++++++'
     @subscribers = []
     @objsubscribers = []
     @objectsSubscribedTo = []
@@ -22,6 +23,8 @@ class spinredis
     @sessionId = null
     @objects = new lru(opts)
 
+    @savedMessagesInCaseOfRetries = new lru({max:1000, maxAgeInMilliseconds: 5000})
+
     if debug then console.log 'redis-spincycle dbUrl = ' + dbUrl
     rhost = dbUrl or process.env['REDIS_PORT_6379_TCP_ADDR'] or '127.0.0.1'
     rport = process.env['REDIS_PORT_6379_TCP_PORT'] or '6379'
@@ -32,16 +35,23 @@ class spinredis
     @listenredis.on 'error', (err) ->
       console.log 'spinredis listen ERROR: ' + err
 
+    @listenredis.on 'end', (err) ->
+      console.log 'spinredis listen end event: ' + err
+
     @sendredis.on 'error', (err) ->
       console.log 'spinredis send ERROR: ' + err
 
+    @sendredis.on 'end', (err) ->
+      console.log 'spinredis send end event: ' + err
 
-    @subscribers['OBJECT_UPDATE'] = [(obj) ->
-#console.log 'spinclient +++++++++ obj update message router got obj'
-#console.dir(obj);
-      @subscribers = objsubscribers[obj.id] or []
-      for k,v of @subscribers
-#console.log 'updating subscriber to @objects updates on id '+k
+
+    @subscribers['OBJECT_UPDATE'] = [(obj) =>
+      console.log 'spincredis +++++++++ obj update message router got obj'
+      #console.dir(obj);
+      #console.dir(@objsubscribers)
+      objsubs = @objsubscribers[obj.id] or []
+      for k,v of objsubs
+        console.log 'updating subscriber to @objects updates on id '+k
         if not @objects.get(obj.id)
           @objects.set(obj.id, obj)
         else
@@ -69,8 +79,9 @@ class spinredis
 
   emit: (message) =>
     message.channelID = 'spinchannel_' + @channelID
-    if debug then console.log 'redisclient emitting message..'
-    if debug then console.dir message
+    #console.log 'redisclient emitting message..'
+    #console.dir message
+    @savedMessagesInCaseOfRetries.set(message.messageId, message)
     @sendredis.publish('spinchannel', JSON.stringify(message))
 
   setup: () =>
@@ -78,14 +89,24 @@ class spinredis
     @listenredis.subscribe('spinchannel_' + @channelID)
 
     @listenredis.on 'message', (channel, replystr) =>
-      if debug then console.log 'on message got ' + replystr
+      #console.log 'spinredis on message got ' + replystr
       reply = JSON.parse(replystr)
       status = reply.status
       message = reply.payload
       info = reply.info
 
-      if not @hasSeenThisMessage reply.messageId
-        @seenMessages.push(reply.messageId)
+      if message and message.error and message.error == 'ERRCHILLMAN'
+        oldmsg = @savedMessagesInCaseOfRetries[reply.messageId]
+        setTimeout(
+          ()=>
+            console.log 'resending message '+oldmsg.messageId+' due to target endpoint not open yet'
+            @emit(oldmsg)
+          ,250
+        )
+
+      else if not @hasSeenThisMessage reply.messageId
+        @savedMessagesInCaseOfRetries.remove(reply.messageId)
+        if reply.messageId and reply.messageId isnt 'undefined' then @seenMessages.push(reply.messageId)
         if @seenMessages.length > 10 then @seenMessages.shift()
         if debug then console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = ' + @outstandingMessages.length
         if debug then @dumpOutstanding()
@@ -103,7 +124,7 @@ class spinredis
                 detail.d.reject reply
                 break
               else
-#console.log 'delivering message '+message+' reply to '+detail.target+' to '+reply.messageId
+                #console.log 'delivering message '+message+' reply to '+detail.target+' to '+reply.messageId
                 detail.d.resolve(message)
                 break
               detail.delivered = true
@@ -111,9 +132,9 @@ class spinredis
           if index > -1
             @outstandingMessages.splice index, 1
         else
-          @subscribers = @subscribers[info]
-          if @subscribers
-            @subscribers.forEach (listener) ->
+          subs = @subscribers[info]
+          if subs
+            subs.forEach (listener) ->
               listener message
           else
             if debug then console.log 'no subscribers for message ' + message
@@ -126,33 +147,33 @@ class spinredis
 
   registerListener: (detail) =>
     console.log 'spinclient::registerListener called for ' + detail.message
-    @subscribers = @subscribers[detail.message] or []
-    @subscribers.push detail.callback
-    @subscribers[detail.message] = @subscribers
+    subs = @subscribers[detail.message] or []
+    subs.push detail.callback
+    @subscribers[detail.message] = subs
 
   registerObjectSubscriber: (detail) =>
     d = $q.defer()
     sid = uuid.v4()
     localsubs = @objectsSubscribedTo[detail.id]
-    console.log 'register@objectsSubscriber localsubs is'
-    console.dir localsubs
+    #console.log 'register@objectsSubscriber localsubs is'
+    #console.dir localsubs
     if not localsubs
       localsubs = []
-      console.log 'no local subs, so get the original server-side subscription for id ' + detail.id
+      #console.log 'no local subs, so get the original server-side subscription for id ' + detail.id
       # actually set up subscription, once for each @objects
       @_registerObjectSubscriber({
-        id: detail.id, type: detail.type, cb: (updatedobj) ->
+        id: detail.id, type: detail.type, cb: (updatedobj) =>
           console.log '-- register@objectsSubscriber getting obj update callback for ' + detail.id
           lsubs = @objectsSubscribedTo[detail.id]
           #console.dir(lsubs)
           for k,v of lsubs
             if (v.cb)
-              console.log '--*****--*****-- calling back @objects update to local sid --****--*****-- ' + k
+              #console.log '--*****--*****-- calling back @objects update to local sid --****--*****-- ' + k
               v.cb updatedobj
       }).then( (remotesid) =>
           localsubs['remotesid'] = remotesid
           localsubs[sid] = detail
-          console.log '-- adding local callback listener to @objects updates for ' + detail.id + ' local sid = ' + sid + ' remotesid = ' + remotesid
+          #console.log '-- adding local callback listener to @objects updates for ' + detail.id + ' local sid = ' + sid + ' remotesid = ' + remotesid
           @objectsSubscribedTo[detail.id] = localsubs
           d.resolve(sid)
         ,(rejection)=>
@@ -164,13 +185,13 @@ class spinredis
   _registerObjectSubscriber: (detail) =>
     d = $q.defer()
     console.log 'message-router registering subscriber for @objects ' + detail.id + ' type ' + detail.type
-    @subscribers = @objsubscribers[detail.id] or []
+    subs = @objsubscribers[detail.id] or []
 
     @emitMessage({target: 'registerForUpdatesOn', obj: {id: detail.id, type: detail.type}}).then(
       (reply)=>
         console.log 'server subscription id for id ' + detail.id + ' is ' + reply
-        @subscribers[reply] = detail.cb
-        @objsubscribers[detail.id] = @subscribers
+        subs[reply] = detail.cb
+        @objsubscribers[detail.id] = subs
         d.resolve(reply)
     , (reply)=>
       @failed(reply)
@@ -189,10 +210,10 @@ class spinredis
         @_deRegisterObjectsSubscriber('remotesid', o)
 
   _deRegisterObjectsSubscriber: (sid, o) =>
-    @subscribers = @objsubscribers[o.id] or []
-    if @subscribers and @subscribers[sid]
-      delete @subscribers[sid]
-      @objsubscribers[o.id] = @subscribers
+    subs = @objsubscribers[o.id] or []
+    if subs and subs[sid]
+      delete subs[sid]
+      @objsubscribers[o.id] = subs
       @emitMessage({target: 'deRegisterForUpdatesOn', id: o.id, type: o.type, listenerid: sid}).then (reply)->
         console.log 'deregistering server updates for @objects ' + o.id
 
