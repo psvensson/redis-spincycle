@@ -89,13 +89,14 @@ class spinredis
     @listenredis.subscribe('spinchannel_' + @channelID)
 
     @listenredis.on 'message', (channel, replystr) =>
-      #console.log 'spinredis on message got ' + replystr
+      if debug then console.log 'spinredis on message got ' + replystr
       reply = JSON.parse(replystr)
       status = reply.status
       message = reply.payload
       info = reply.info
 
       if message and message.error and message.error == 'ERRCHILLMAN'
+        console.log 'got ERRCHILLMAN from spinycle service, preparing to retry sending message...'
         oldmsg = @savedMessagesInCaseOfRetries[reply.messageId]
         setTimeout(
           ()=>
@@ -219,7 +220,7 @@ class spinredis
 
   emitMessage: (detail) =>
     if debug then console.log 'emitMessage called'
-    #console.dir detail
+    if debug then console.dir detail
     d = $q.defer()
     detail.messageId = uuid.v4()
     detail.sessionId = detail.sessionId or @sessionId
