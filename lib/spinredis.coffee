@@ -46,7 +46,7 @@ class spinredis
 
 
     @subscribers['OBJECT_UPDATE'] = [(obj) =>
-      console.log 'spincredis +++++++++ obj update message router got obj'
+      #console.log 'spincredis +++++++++ obj update message router got obj'
       #console.dir(obj);
       #console.dir(@objsubscribers)
       objsubs = @objsubscribers[obj.id] or []
@@ -164,7 +164,7 @@ class spinredis
       # actually set up subscription, once for each @objects
       @_registerObjectSubscriber({
         id: detail.id, type: detail.type, cb: (updatedobj) =>
-          console.log '-- register@objectsSubscriber getting obj update callback for ' + detail.id
+          #console.log '-- register@objectsSubscriber getting obj update callback for ' + detail.id
           lsubs = @objectsSubscribedTo[detail.id]
           #console.dir(lsubs)
           for k,v of lsubs
@@ -185,7 +185,7 @@ class spinredis
 
   _registerObjectSubscriber: (detail) =>
     d = $q.defer()
-    console.log 'message-router registering subscriber for @objects ' + detail.id + ' type ' + detail.type
+    console.log 'spinredis message-router registering subscriber for @objects ' + detail.id + ' type ' + detail.type
     subs = @objsubscribers[detail.id] or []
 
     @emitMessage({target: 'registerForUpdatesOn', obj: {id: detail.id, type: detail.type}}).then(
