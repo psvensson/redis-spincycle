@@ -51,7 +51,7 @@ class spinredis
       #console.dir(@objsubscribers)
       objsubs = @objsubscribers[obj.id] or []
       for k,v of objsubs
-        console.log 'updating subscriber to @objects updates on id '+k
+        #console.log 'updating subscriber to @objects updates on id '+k
         if not @objects.get(obj.id)
           @objects.set(obj.id, obj)
         else
