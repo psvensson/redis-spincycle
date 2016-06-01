@@ -183,8 +183,7 @@ class spinredis
           console.dir rejection
       )
     else
-      console.log 'spinredis.. ehhh. so we just sit here and wait when we DO have local subs eh? '
-      console.dir details
+      localsubs[sid] = detail
     return d.promise
 
   _registerObjectSubscriber: (detail) =>
