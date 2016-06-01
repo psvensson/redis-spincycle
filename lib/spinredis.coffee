@@ -147,7 +147,7 @@ class spinredis
     @seenMessages.some (mid) -> messageId == mid
 
   registerListener: (detail) =>
-    console.log 'spinclient::registerListener called for ' + detail.message
+    #console.log 'spinclient::registerListener called for ' + detail.message
     subs = @subscribers[detail.message] or []
     subs.push detail.callback
     @subscribers[detail.message] = subs
@@ -185,12 +185,12 @@ class spinredis
 
   _registerObjectSubscriber: (detail) =>
     d = $q.defer()
-    console.log 'spinredis message-router registering subscriber for @objects ' + detail.id + ' type ' + detail.type
+    #console.log 'spinredis message-router registering subscriber for @objects ' + detail.id + ' type ' + detail.type
     subs = @objsubscribers[detail.id] or []
 
     @emitMessage({target: 'registerForUpdatesOn', obj: {id: detail.id, type: detail.type}}).then(
       (reply)=>
-        console.log 'server subscription id for id ' + detail.id + ' is ' + reply
+        #console.log 'server subscription id for id ' + detail.id + ' is ' + reply
         subs[reply] = detail.cb
         @objsubscribers[detail.id] = subs
         d.resolve(reply)
