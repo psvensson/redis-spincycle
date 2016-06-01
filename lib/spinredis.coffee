@@ -46,7 +46,7 @@ class spinredis
 
 
     @subscribers['OBJECT_UPDATE'] = [(obj) =>
-      #console.log 'spincredis +++++++++ obj update message router got obj'
+      console.log 'spincredis +++++++++ obj update message router got obj '+obj.id+' of type '+obj.type
       #console.dir(obj);
       #console.dir(@objsubscribers)
       objsubs = @objsubscribers[obj.id] or []
@@ -56,6 +56,7 @@ class spinredis
           @objects.set(obj.id, obj)
         else
           o = @objects.get(obj.id)
+          obj = o
           for prop, val of obj
             o[prop] = val
         v obj
@@ -160,7 +161,7 @@ class spinredis
     #console.dir localsubs
     if not localsubs
       localsubs = []
-      #console.log 'no local subs, so get the original server-side subscription for id ' + detail.id
+      console.log 'spinredis no local subs, so get the original server-side subscription for id ' + detail.id
       # actually set up subscription, once for each @objects
       @_registerObjectSubscriber({
         id: detail.id, type: detail.type, cb: (updatedobj) =>
@@ -181,6 +182,9 @@ class spinredis
           console.log 'spinredis registerObjectSubscriber rejection: '+rejection
           console.dir rejection
       )
+    else
+      console.log 'spinredis.. ehhh. so we just sit here and wait when we DO have local subs eh? '
+      console.dir details
     return d.promise
 
   _registerObjectSubscriber: (detail) =>
@@ -190,7 +194,7 @@ class spinredis
 
     @emitMessage({target: 'registerForUpdatesOn', obj: {id: detail.id, type: detail.type}}).then(
       (reply)=>
-        #console.log 'server subscription id for id ' + detail.id + ' is ' + reply
+        console.log 'spinredis server subscription id for id ' + detail.id + ' is ' + reply
         subs[reply] = detail.cb
         @objsubscribers[detail.id] = subs
         d.resolve(reply)
