@@ -79,69 +79,95 @@ class spinredis
 
   emit: (message) =>
     message.channelID = 'spinchannel_' + @channelID
+    if @open
+      _emit(message)
+    else
+      setTimeout(
+        ()=>
+          @emit(message)
+      ,200+parseInt(Math.random()*100)
+      )
+
+  _emit:(message)=>
     if debug then console.log 'redisclient emitting message..'
     if debug then console.dir message
     @savedMessagesInCaseOfRetries.set(message.messageId, message)
     @sendredis.publish('spinchannel', JSON.stringify(message))
 
+  openChannel:()=>
+    # 'list of available targets'
+    if not @open
+      @sendredis.publish('spinchannel', JSON.stringify({target: 'listcommands'}))
+      setTimeout(
+        ()=>
+          @openChannel()
+        ,100
+      )
+
   setup: () =>
     @channelID = uuid.v4()
     @listenredis.subscribe('spinchannel_' + @channelID)
+    @openChannel()
 
     @listenredis.on 'message', (channel, replystr) =>
       if debug then console.log 'spinredis on message got ' + replystr
+
       reply = JSON.parse(replystr)
       status = reply.status
       message = reply.payload
       info = reply.info
 
-      if message and message.error and message.error == 'ERRCHILLMAN'
-        console.log 'got ERRCHILLMAN from spinycle service, preparing to retry sending message...'
-        oldmsg = @savedMessagesInCaseOfRetries[reply.messageId]
-        setTimeout(
-          ()=>
-            console.log 'resending message '+oldmsg.messageId+' due to target endpoint not open yet'
-            @emit(oldmsg)
-          ,250
-        )
-
-      else if not @hasSeenThisMessage reply.messageId
-        @savedMessagesInCaseOfRetries.remove(reply.messageId)
-        if reply.messageId and reply.messageId isnt 'undefined' then @seenMessages.push(reply.messageId)
-        if @seenMessages.length > 10 then @seenMessages.shift()
-        if debug then console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = ' + @outstandingMessages.length
-        if debug then @dumpOutstanding()
-        #console.dir reply
-        index = -1
-        if reply.messageId
-          i = 0
-          while i < @outstandingMessages.length
-            index = i
-            detail = @outstandingMessages[i]
-            if detail and not detail.delivered and detail.messageId == reply.messageId
-              if reply.status == 'FAILURE' or reply.status == 'NOT_ALLOWED'
-                console.log 'spinclient message FAILURE'
-                console.dir reply
-                detail.d.reject reply
-                break
-              else
-                #console.log 'delivering message '+message+' reply to '+detail.target+' to '+reply.messageId
-                detail.d.resolve(message)
-                break
-              detail.delivered = true
-            i++
-          if index > -1
-            @outstandingMessages.splice index, 1
-        else
-          subs = @subscribers[info]
-          if subs
-            subs.forEach (listener) ->
-              listener message
-          else
-            if debug then console.log 'no subscribers for message ' + message
-            if debug then console.dir reply
+      if info == 'list of available targets'
+        console.log 'Spincycle server channel is up and awake'
+        @open = true
       else
-        if debug then console.log '-- skipped resent message ' + reply.messageId
+        if message and message.error and message.error == 'ERRCHILLMAN'
+          console.log 'got ERRCHILLMAN from spinycle service, preparing to retry sending message...'
+          oldmsg = @savedMessagesInCaseOfRetries[reply.messageId]
+          setTimeout(
+            ()=>
+              console.log 'resending message '+oldmsg.messageId+' due to target endpoint not open yet'
+              @emit(oldmsg)
+            ,250
+          )
+
+        else if not @hasSeenThisMessage reply.messageId
+          @savedMessagesInCaseOfRetries.remove(reply.messageId)
+          if reply.messageId and reply.messageId isnt 'undefined' then @seenMessages.push(reply.messageId)
+          if @seenMessages.length > 10 then @seenMessages.shift()
+          if debug then console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = ' + @outstandingMessages.length
+          if debug then @dumpOutstanding()
+          #console.dir reply
+          index = -1
+          if reply.messageId
+            i = 0
+            while i < @outstandingMessages.length
+              index = i
+              detail = @outstandingMessages[i]
+              if detail and not detail.delivered and detail.messageId == reply.messageId
+                if reply.status == 'FAILURE' or reply.status == 'NOT_ALLOWED'
+                  console.log 'spinclient message FAILURE'
+                  console.dir reply
+                  detail.d.reject reply
+                  break
+                else
+                  #console.log 'delivering message '+message+' reply to '+detail.target+' to '+reply.messageId
+                  detail.d.resolve(message)
+                  break
+                detail.delivered = true
+              i++
+            if index > -1
+              @outstandingMessages.splice index, 1
+          else
+            subs = @subscribers[info]
+            if subs
+              subs.forEach (listener) ->
+                listener message
+            else
+              if debug then console.log 'no subscribers for message ' + message
+              if debug then console.dir reply
+        else
+          if debug then console.log '-- skipped resent message ' + reply.messageId
 
   hasSeenThisMessage: (messageId) =>
     @seenMessages.some (mid) -> messageId == mid
