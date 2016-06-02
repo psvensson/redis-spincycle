@@ -104,7 +104,7 @@ class spinredis
       setTimeout(
         ()=>
           @openChannel()
-        ,100
+        ,250
       )
 
   setup: () =>
@@ -125,14 +125,15 @@ class spinredis
         @open = true
       else
         if message and message.error and message.error == 'ERRCHILLMAN'
-          console.log 'got ERRCHILLMAN from spinycle service, preparing to retry sending message...'
           oldmsg = @savedMessagesInCaseOfRetries[reply.messageId]
-          setTimeout(
-            ()=>
-              console.log 'resending message '+oldmsg.messageId+' due to target endpoint not open yet'
-              @emit(oldmsg)
-            ,250
-          )
+          if oldmsg
+            console.log 'got ERRCHILLMAN from spinycle service, preparing to retry sending message...'
+            setTimeout(
+              ()=>
+                console.log 'resending message '+oldmsg.messageId+' due to target endpoint not open yet'
+                @emit(oldmsg)
+              ,250
+            )
 
         else if not @hasSeenThisMessage reply.messageId
           @savedMessagesInCaseOfRetries.remove(reply.messageId)
