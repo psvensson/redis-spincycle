@@ -98,8 +98,9 @@ class spinredis
 
   openChannel:()=>
     # 'list of available targets'
+
     if not @open
-      @sendredis.publish('spinchannel', JSON.stringify({target: 'listcommands'}))
+      @sendredis.publish('spinchannel', JSON.stringify({target: 'listcommands', channelID: @channelID, messageId: uuid.v4()}))
       setTimeout(
         ()=>
           @openChannel()
