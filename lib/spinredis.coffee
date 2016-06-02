@@ -12,6 +12,7 @@ class spinredis
 
   constructor: (dbUrl) ->
     console.log 'spinclient +++++++++ constructor called +++++++++++'
+    @open = false
     @subscribers = []
     @objsubscribers = []
     @objectsSubscribedTo = []
@@ -82,6 +83,7 @@ class spinredis
     if @open
       _emit(message)
     else
+      console.log 'spincycle is not awake at other end yet...'
       setTimeout(
         ()=>
           @emit(message)
