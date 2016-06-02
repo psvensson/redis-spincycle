@@ -46,8 +46,8 @@ class spinredis
 
 
     @subscribers['OBJECT_UPDATE'] = [(obj) =>
-      console.log 'spincredis +++++++++ obj update message router got obj '+obj.id+' of type '+obj.type
-      #console.dir(obj);
+      console.log 'spinredis +++++++++ obj update message router got obj '+obj.id+' of type '+obj.type
+      console.dir(obj);
       #console.dir(@objsubscribers)
       objsubs = @objsubscribers[obj.id] or []
       for k,v of objsubs
