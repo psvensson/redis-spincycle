@@ -56,7 +56,6 @@ class spinredis
           @objects.set(obj.id, obj)
         else
           o = @objects.get(obj.id)
-          obj = o
           for prop, val of obj
             o[prop] = val
         v obj
