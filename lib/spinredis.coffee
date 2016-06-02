@@ -81,7 +81,7 @@ class spinredis
   emit: (message) =>
     message.channelID = 'spinchannel_' + @channelID
     if @open
-      _emit(message)
+      @_emit(message)
     else
       console.log 'spincycle is not awake at other end yet...'
       setTimeout(
