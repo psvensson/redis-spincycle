@@ -48,7 +48,7 @@ class spinredis
 
     @subscribers['OBJECT_UPDATE'] = [(obj) =>
       console.log 'spinredis +++++++++ obj update message router got obj '+obj.id+' of type '+obj.type
-      console.dir(obj);
+      #console.dir(obj);
       #console.dir(@objsubscribers)
       objsubs = @objsubscribers[obj.id] or []
       for k,v of objsubs
@@ -91,14 +91,13 @@ class spinredis
       )
 
   _emit:(message)=>
-    if debug then console.log 'redisclient emitting message..'
-    if debug then console.dir message
+    #if debug then console.log 'redisclient emitting message..'
+    #if debug then console.dir message
     @savedMessagesInCaseOfRetries.set(message.messageId, message)
     @sendredis.publish('spinchannel', JSON.stringify(message))
 
   openChannel:()=>
     # 'list of available targets'
-
     if not @open
       @sendredis.publish('spinchannel', JSON.stringify({target: 'listcommands', channelID: 'spinchannel_'+@channelID, messageId: uuid.v4()}))
       setTimeout(
@@ -190,7 +189,7 @@ class spinredis
     #console.dir localsubs
     if not localsubs
       localsubs = []
-      console.log 'spinredis no local subs, so get the original server-side subscription for id ' + detail.id
+      #console.log 'spinredis no local subs, so get the original server-side subscription for id ' + detail.id
       # actually set up subscription, once for each @objects
       @_registerObjectSubscriber({
         id: detail.id, type: detail.type, cb: (updatedobj) =>
@@ -222,7 +221,7 @@ class spinredis
 
     @emitMessage({target: 'registerForUpdatesOn', obj: {id: detail.id, type: detail.type}}).then(
       (reply)=>
-        console.log 'spinredis server subscription id for id ' + detail.id + ' is ' + reply
+        #console.log 'spinredis server subscription id for id ' + detail.id + ' is ' + reply
         subs[reply] = detail.cb
         @objsubscribers[detail.id] = subs
         d.resolve(reply)
