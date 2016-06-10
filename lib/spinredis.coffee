@@ -138,8 +138,8 @@ class spinredis
           @savedMessagesInCaseOfRetries.remove(reply.messageId)
           if reply.messageId and reply.messageId isnt 'undefined' then @seenMessages.push(reply.messageId)
           if @seenMessages.length > 10 then @seenMessages.shift()
-          if debug then console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = ' + @outstandingMessages.length
-          if debug then @dumpOutstanding()
+          #if debug then console.log 'redis-spincycle got reply messageId ' + reply.messageId + ' status ' + status + ', info ' + info + ' data ' + message + ' outstandingMessages = ' + @outstandingMessages.length
+          #if debug then @dumpOutstanding()
           #console.dir reply
           index = -1
           if reply.messageId
@@ -257,7 +257,7 @@ class spinredis
     detail.sessionId = detail.sessionId or @sessionId
     detail.d = d
     @outstandingMessages.push detail
-    if debug then console.log 'saving outstanding reply to messageId ' + detail.messageId + ' and @sessionId ' + detail.sessionId
+    #if debug then console.log 'saving outstanding reply to messageId ' + detail.messageId + ' and @sessionId ' + detail.sessionId
     @emit detail
 
     return d.promise

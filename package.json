@@ -1,6 +1,6 @@
 {
   "name": "redis-spincycle",
-  "version": "1.0.41",
+  "version": "1.0.43",
   "description": "library tha connects to a spincycle server using redis pubsub",
   "main": "index.js",
   "scripts": {
