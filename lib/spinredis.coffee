@@ -91,8 +91,8 @@ class spinredis
       )
 
   _emit:(message)=>
-    if debug then console.log 'redisclient emitting message..'
-    if debug then console.dir message
+    #if debug then console.log 'redisclient emitting message..'
+    #if debug then console.dir message
     @savedMessagesInCaseOfRetries.set(message.messageId, message)
     @sendredis.publish('spinchannel', JSON.stringify(message))
 
@@ -112,7 +112,7 @@ class spinredis
     @openChannel()
 
     @listenredis.on 'message', (channel, replystr) =>
-      if debug then console.log '*** spinredis on message got ' + replystr
+      #if debug then console.log '*** spinredis on message got ' + replystr
 
       reply = JSON.parse(replystr)
       status = reply.status
@@ -250,8 +250,8 @@ class spinredis
         console.log 'deregistering server updates for @objects ' + o.id
 
   emitMessage: (detail) =>
-    if debug then console.log 'emitMessage called'
-    if debug then console.dir detail
+    #if debug then console.log 'emitMessage called'
+    #if debug then console.dir detail
     d = $q.defer()
     detail.messageId = uuid.v4()
     detail.sessionId = detail.sessionId or @sessionId
