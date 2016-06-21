@@ -103,7 +103,7 @@ class spinredis
       setTimeout(
         ()=>
           @openChannel()
-        ,250
+        ,500
       )
 
   setup: () =>
