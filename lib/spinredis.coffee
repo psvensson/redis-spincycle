@@ -11,7 +11,8 @@ opts =
 class spinredis
 
   constructor: (dbUrl) ->
-    console.log 'spinclient +++++++++ constructor called +++++++++++'
+    pjson = require('../package.json');
+    console.log 'spinclient Version - '+pjson.version+' +++++++++ constructor called +++++++++++'
     @open = false
     @subscribers = []
     @objsubscribers = []

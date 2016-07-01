@@ -47,31 +47,35 @@ describe("Redis spinclient", function()
     {
         sr.emitMessage({target:'_listSampleGames'}).then(function(reply)
         {
-            //console.log('we got a reply. games are:');
-            //console.dir(reply)
+            console.log('we got a reply. games are:');
+            console.dir(reply)
             var game = reply[0]
 
+            var _done = false
             var onUpdate = function(ugame)
             {
-                expect(ugame.name).to.include('_changed_eh')
-                done()
+                if(!_done)
+                {
+                    _done = true
+                    expect(ugame.name).to.include('_changed_eh')
+                    done()
+                }
             }
 
-            console.log('-- spinredis subscribing to SampleGame '+game.id)
+            console.log('-- spinredis test subscribing to SampleGame '+game.id)
             sr.registerObjectSubscriber({type:'SampleGame', id:game.id, cb: onUpdate}).then(function(reply2)
             {
+                //console.log('--spinredis test subscribe replied ')
+                //console.dir(reply2)
                 game.name += '_changed_eh'
 
                 sr.emitMessage({target:'_updateSampleGame', type:'SampleGame', obj:game}).then(function(reply3)
                 {
-                    console.log('update successful')
+                    console.log('--spinredis test update successful')
                     //console.dir(reply3)
                 })
 
             })
-
-
-
         }, function(reject)
         {
             expect(reject).to.exist
