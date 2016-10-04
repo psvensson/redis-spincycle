@@ -77,7 +77,7 @@ class spinredis
     console.log '-------------------------------- ' + @outstandingMessages.length + ' outstanding messages ---------------------------------'
     @outstandingMessages.forEach (os)->
       console.log os.messageId + ' -> ' + os.target + ' - ' + os.d
-    console.log '-----------------------------------------------------------------------------------------'
+    #console.log '-----------------------------------------------------------------------------------------'
 
   emit: (message) =>
     message.channelID = 'spinchannel_' + @channelID
@@ -193,7 +193,7 @@ class spinredis
       #console.log 'spinredis no local subs, so get the original server-side subscription for id ' + detail.id
       # actually set up subscription, once for each @objects
       @_registerObjectSubscriber({
-        id: detail.id, type: detail.type, cb: (updatedobj) =>
+        id: detail.id, sessionId: detail.sessionId, type: detail.type, cb: (updatedobj) =>
           #console.log '-- register@objectsSubscriber getting obj update callback for ' + detail.id
           lsubs = @objectsSubscribedTo[detail.id]
           #console.dir(lsubs)
@@ -220,7 +220,7 @@ class spinredis
     #console.log 'spinredis message-router registering subscriber for @objects ' + detail.id + ' type ' + detail.type
     subs = @objsubscribers[detail.id] or []
 
-    @emitMessage({target: 'registerForUpdatesOn', obj: {id: detail.id, type: detail.type}}).then(
+    @emitMessage({target: 'registerForUpdatesOn', sessionId: detail.sessionId, obj: {id: detail.id, type: detail.type}}).then(
       (reply)=>
         #console.log 'spinredis server subscription id for id ' + detail.id + ' is ' + reply
         subs[reply] = detail.cb
