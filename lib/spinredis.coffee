@@ -107,8 +107,8 @@ class spinredis
         ,500
       )
 
-  setup: () =>
-    @channelID = uuid.v4()
+  setup: (channelID) =>
+    @channelID = channelID or uuid.v4()
     @listenredis.subscribe('spinchannel_' + @channelID)
     @openChannel()
 
