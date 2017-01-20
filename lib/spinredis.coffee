@@ -95,20 +95,21 @@ class spinredis
     #if debug then console.log 'redisclient emitting message..'
     #if debug then console.dir message
     @savedMessagesInCaseOfRetries.set(message.messageId, message)
-    @sendredis.publish('spinchannel_'+@destinationID, JSON.stringify(message))
+    @sendredis.publish(@destinationID, JSON.stringify(message))
 
   openChannel:()=>
     # 'list of available targets'
     if not @open
-      @sendredis.publish('spinchannel_'+@destinationID, JSON.stringify({target: 'listcommands', channelID: 'spinchannel_'+@channelID, messageId: uuid.v4()}))
+      @sendredis.publish(@destinationID, JSON.stringify({target: 'listcommands', channelID: 'spinchannel_'+@channelID, messageId: uuid.v4()}))
       setTimeout(
         ()=>
           @openChannel()
         ,500
       )
 
-  setup: (channelID, @destinationID) =>
+  setup: (channelID, @destination) =>
     @channelID = channelID or uuid.v4()
+    if @destination then @destinationID = 'spinchannel_'+@destination else @destinationID = 'spinchannel'
     @listenredis.subscribe('spinchannel_' + @channelID)
     @openChannel()
 
